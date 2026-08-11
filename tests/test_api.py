@@ -1,4 +1,5 @@
 import io
+from urllib.parse import urlparse
 
 import pygltflib
 from fastapi.testclient import TestClient
@@ -44,6 +45,31 @@ def test_convert_returns_valid_glb():
 
     positions_accessor = gltf_obj.accessors[0]
     assert positions_accessor.count == 32 * 20
+
+
+def test_convert_exposes_model_and_viewer_urls():
+    png_bytes = _sample_png_bytes()
+    response = client.post(
+        "/convert",
+        files={"file": ("sample.png", png_bytes, "image/png")},
+        params={"resolution": 16},
+    )
+    assert response.status_code == 200
+
+    model_url = response.headers["x-model-url"]
+    viewer_url = response.headers["x-gltf-viewer-url"]
+    assert model_url.endswith(".glb")
+    assert "/models/" in model_url
+    assert viewer_url == f"https://gltf-viewer.donmccurdy.com/#model={model_url}"
+
+    model_response = client.get(urlparse(model_url).path)
+    assert model_response.status_code == 200
+    assert model_response.content == response.content
+
+
+def test_get_model_not_found():
+    response = client.get("/models/does-not-exist.glb")
+    assert response.status_code == 404
 
 
 def test_convert_rejects_non_image():

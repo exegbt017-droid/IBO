@@ -4,21 +4,34 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
 from app.mesh import MAX_RESOLUTION, MIN_RESOLUTION, MeshOptions, image_to_glb
+from app.storage import store
 
 ACCEPTED_CONTENT_TYPES = {"image/jpeg", "image/png"}
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+GLTF_VIEWER_ORIGIN = "https://gltf-viewer.donmccurdy.com"
+
 app = FastAPI(
     title="IBO - Conversor 2D para 3D",
     description="Converte uma imagem 2D (JPEG/PNG) em uma malha 3D texturizada (glTF/GLB) usando um heightmap de luminancia.",
     version="1.0.0",
+)
+
+# Permite que o gltf-viewer.donmccurdy.com busque (fetch) os modelos gerados
+# em /models/{id}.glb a partir do navegador do proprio usuario.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[GLTF_VIEWER_ORIGIN],
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 
@@ -39,6 +52,7 @@ def viewer() -> FileResponse:
     summary="Converte uma imagem 2D em um modelo 3D (.glb)",
 )
 async def convert(
+    request: Request,
     file: UploadFile = File(..., description="Arquivo de imagem (PNG, JPEG, etc)."),
     resolution: int = Query(
         128,
@@ -75,12 +89,30 @@ async def convert(
     except Exception as exc:  # pragma: no cover - fallback defensivo
         raise HTTPException(status_code=500, detail=f"Falha ao gerar o modelo 3D: {exc}") from exc
 
+    model_id = store.save(glb_bytes)
+    model_url = str(request.base_url).rstrip("/") + f"/models/{model_id}.glb"
+    viewer_url = f"{GLTF_VIEWER_ORIGIN}/#model={model_url}"
+
     out_name = (file.filename or "model").rsplit(".", 1)[0] + ".glb"
     return Response(
         content=glb_bytes,
         media_type="model/gltf-binary",
-        headers={"Content-Disposition": f'attachment; filename="{out_name}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="{out_name}"',
+            "X-Model-Url": model_url,
+            "X-Gltf-Viewer-Url": viewer_url,
+            "Access-Control-Expose-Headers": "X-Model-Url, X-Gltf-Viewer-Url",
+        },
     )
+
+
+@app.get("/models/{model_id}.glb", include_in_schema=False)
+def get_model(model_id: str) -> Response:
+    """Serve um modelo .glb gerado anteriormente, para consumo por visualizadores externos."""
+    data = store.get(model_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Modelo nao encontrado ou expirado.")
+    return Response(content=data, media_type="model/gltf-binary")
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

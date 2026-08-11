@@ -99,7 +99,8 @@
   button:hover:not(:disabled) { background: var(--accent-hover); }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  #download-link {
+  #download-link,
+  #external-viewer-link {
     display: none;
     text-align: center;
     margin-top: 0.75rem;
@@ -107,6 +108,8 @@
     color: var(--accent);
     text-decoration: none;
   }
+  #download-link:hover,
+  #external-viewer-link:hover { text-decoration: underline; }
 
   #status {
     margin-top: 0.75rem;
@@ -115,6 +118,13 @@
     min-height: 1.2em;
   }
   #status.error { color: var(--danger); }
+
+  .footnote {
+    margin-top: 1rem;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--muted);
+  }
 
   #hint {
     position: absolute;
@@ -169,7 +179,16 @@
 
     <button id="convert-btn" disabled>Converter para 3D</button>
     <a id="download-link" download="modelo.glb">Baixar arquivo .glb</a>
+    <a id="external-viewer-link" target="_blank" rel="noopener">Abrir no gltf-viewer.donmccurdy.com ↗</a>
     <div id="status"></div>
+    <p class="footnote">
+      O visualizador embutido acima usa three.js. O link "Abrir no
+      gltf-viewer.donmccurdy.com" leva o modelo gerado direto para o
+      visualizador oficial (mais recursos, ex. wireframe e ambientes),
+      buscando o arquivo neste mesmo servidor &mdash; funciona quando este
+      servidor estiver acessível pelo navegador (ex. localhost ou uma URL
+      pública).
+    </p>
   </div>
 
   <div id="viewer-wrap">
@@ -196,6 +215,7 @@ const dropzone = document.getElementById("dropzone");
 const preview = document.getElementById("preview");
 const convertBtn = document.getElementById("convert-btn");
 const downloadLink = document.getElementById("download-link");
+const externalViewerLink = document.getElementById("external-viewer-link");
 const statusEl = document.getElementById("status");
 const hintEl = document.getElementById("hint");
 
@@ -253,6 +273,7 @@ convertBtn.addEventListener("click", async () => {
   if (!selectedFile) return;
   convertBtn.disabled = true;
   downloadLink.style.display = "none";
+  externalViewerLink.style.display = "none";
   setStatus("Convertendo imagem em modelo 3D...");
 
   try {
@@ -275,12 +296,20 @@ convertBtn.addEventListener("click", async () => {
       throw new Error(err.detail || `Erro HTTP ${response.status}`);
     }
 
+    const viewerUrl = response.headers.get("X-Gltf-Viewer-Url");
+
     const buffer = await response.arrayBuffer();
     renderGlb(buffer);
 
     const blob = new Blob([buffer], { type: "model/gltf-binary" });
     downloadLink.href = URL.createObjectURL(blob);
     downloadLink.style.display = "block";
+
+    if (viewerUrl) {
+      externalViewerLink.href = viewerUrl;
+      externalViewerLink.style.display = "block";
+    }
+
     setStatus("Modelo 3D gerado com sucesso.");
   } catch (err) {
     setStatus(err.message || "Falha ao converter a imagem.", true);

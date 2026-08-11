@@ -34,7 +34,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 Abra `http://localhost:8000/` para usar o **visualizador web**: escolha um
 JPEG ou PNG, ajuste os parâmetros e veja o modelo 3D renderizado
 diretamente no navegador (via three.js), com opção de baixar o `.glb`
-gerado.
+gerado ou abri-lo com um clique no visualizador oficial
+[gltf-viewer.donmccurdy.com](https://gltf-viewer.donmccurdy.com/) — todo o
+fluxo (enviar imagem → gerar modelo → visualizar) fica nessa única página,
+sem precisar baixar e arrastar o arquivo manualmente.
 
 A documentação interativa da API fica em `http://localhost:8000/docs`.
 
@@ -51,7 +54,14 @@ Verificação simples de que o serviço está no ar.
 ### `POST /convert`
 
 Recebe uma imagem via `multipart/form-data` e retorna o arquivo `.glb`
-gerado.
+gerado (binário, no corpo da resposta). Também inclui os headers:
+
+- `X-Model-Url`: URL pública onde esse mesmo modelo pode ser buscado
+  depois (`GET /models/{id}.glb`), com CORS liberado para
+  `gltf-viewer.donmccurdy.com`.
+- `X-Gltf-Viewer-Url`: link pronto no formato
+  `https://gltf-viewer.donmccurdy.com/#model=<X-Model-Url>`, que abre o
+  modelo já carregado no visualizador oficial.
 
 **Parâmetros (query string):**
 
@@ -70,7 +80,15 @@ curl -X POST "http://localhost:8000/convert?resolution=256&depth_scale=0.4" \
   -o modelo.glb
 ```
 
-Abra `modelo.glb` em qualquer visualizador glTF (ex: https://gltf-viewer.donmccurdy.com/).
+Abra `modelo.glb` em qualquer visualizador glTF (ex: https://gltf-viewer.donmccurdy.com/),
+ou use o link pronto retornado em `X-Gltf-Viewer-Url`.
+
+### `GET /models/{id}.glb`
+
+Serve, por até 30 minutos, um modelo previamente gerado por `/convert`.
+Usado internamente pela página web e pelo link do gltf-viewer.donmccurdy.com
+para buscar o arquivo sem precisar de upload manual. Responde `404` se o
+`id` não existir ou já tiver expirado.
 
 ## Testes
 
