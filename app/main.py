@@ -2,16 +2,22 @@
 from __future__ import annotations
 
 import io
+from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 
 from app.mesh import MAX_RESOLUTION, MIN_RESOLUTION, MeshOptions, image_to_glb
 
+ACCEPTED_CONTENT_TYPES = {"image/jpeg", "image/png"}
+
+STATIC_DIR = Path(__file__).parent / "static"
+
 app = FastAPI(
     title="IBO - Conversor 2D para 3D",
-    description="Converte uma imagem 2D em uma malha 3D texturizada (glTF/GLB) usando um heightmap de luminancia.",
+    description="Converte uma imagem 2D (JPEG/PNG) em uma malha 3D texturizada (glTF/GLB) usando um heightmap de luminancia.",
     version="1.0.0",
 )
 
@@ -19,6 +25,12 @@ app = FastAPI(
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def viewer() -> FileResponse:
+    """Serve o visualizador glTF: recebe um JPEG/PNG e mostra o modelo 3D gerado."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post(
@@ -43,8 +55,8 @@ async def convert(
     invert: bool = Query(False, description="Inverte a profundidade (areas claras ficam baixas)."),
     smooth: bool = Query(True, description="Suaviza o heightmap antes de gerar a malha."),
 ) -> Response:
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="O arquivo enviado precisa ser uma imagem.")
+    if file.content_type not in ACCEPTED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="O arquivo enviado precisa ser uma imagem JPEG ou PNG.")
 
     raw = await file.read()
     if not raw:
@@ -69,3 +81,6 @@ async def convert(
         media_type="model/gltf-binary",
         headers={"Content-Disposition": f'attachment; filename="{out_name}"'},
     )
+
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

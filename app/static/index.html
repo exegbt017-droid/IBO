@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IBO - Conversor 2D para 3D</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #2a2e38;
+    --text: #e6e8ec;
+    --muted: #9aa1ad;
+    --accent: #5b8cff;
+    --accent-hover: #7aa0ff;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { margin: 0 0 0.15rem; font-size: 1.15rem; }
+  header p { margin: 0; color: var(--muted); font-size: 0.85rem; }
+
+  main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  #panel {
+    width: 320px;
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+    overflow-y: auto;
+  }
+  #viewer-wrap {
+    flex: 1;
+    position: relative;
+    background: radial-gradient(circle at 50% 40%, #1b1f2a 0%, #0c0e12 100%);
+  }
+  #viewer { width: 100%; height: 100%; display: block; }
+
+  .field { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.35rem; }
+  input[type="file"] {
+    width: 100%;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  input[type="range"] { width: 100%; }
+  .row { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+  .checkbox-row { display: flex; align-items: center; gap: 0.5rem; }
+  .checkbox-row label { margin: 0; }
+
+  #dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #dropzone.dragover { border-color: var(--accent); color: var(--text); }
+  #preview {
+    max-width: 100%;
+    max-height: 120px;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    display: none;
+  }
+
+  button {
+    width: 100%;
+    padding: 0.65rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-hover); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #download-link {
+    display: none;
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  #status {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-height: 1.2em;
+  }
+  #status.error { color: var(--danger); }
+
+  #hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+    text-align: center;
+    padding: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>IBO &mdash; Conversor de imagem 2D para modelo 3D</h1>
+  <p>Envie um JPEG ou PNG e visualize o relevo 3D gerado (glTF/GLB) direto no navegador.</p>
+</header>
+
+<main>
+  <div id="panel">
+    <div class="field">
+      <label for="file-input">Imagem (JPEG ou PNG)</label>
+      <div id="dropzone">
+        Arraste uma imagem aqui ou clique para escolher
+        <input id="file-input" type="file" accept="image/png,image/jpeg" style="display:none" />
+        <img id="preview" alt="Pré-visualização" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="resolution">Resolução da malha: <span id="resolution-val">128</span></label>
+      <input id="resolution" type="range" min="8" max="512" step="8" value="128" />
+    </div>
+
+    <div class="field">
+      <label for="depth">Profundidade: <span id="depth-val">0.30</span></label>
+      <input id="depth" type="range" min="0" max="2" step="0.05" value="0.3" />
+    </div>
+
+    <div class="field checkbox-row">
+      <input id="invert" type="checkbox" />
+      <label for="invert">Inverter profundidade</label>
+    </div>
+    <div class="field checkbox-row">
+      <input id="smooth" type="checkbox" checked />
+      <label for="smooth">Suavizar</label>
+    </div>
+
+    <button id="convert-btn" disabled>Converter para 3D</button>
+    <a id="download-link" download="modelo.glb">Baixar arquivo .glb</a>
+    <div id="status"></div>
+  </div>
+
+  <div id="viewer-wrap">
+    <div id="hint">Escolha uma imagem e clique em "Converter para 3D" para ver o resultado aqui.</div>
+    <canvas id="viewer"></canvas>
+  </div>
+</main>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const fileInput = document.getElementById("file-input");
+const dropzone = document.getElementById("dropzone");
+const preview = document.getElementById("preview");
+const convertBtn = document.getElementById("convert-btn");
+const downloadLink = document.getElementById("download-link");
+const statusEl = document.getElementById("status");
+const hintEl = document.getElementById("hint");
+
+const resolutionInput = document.getElementById("resolution");
+const resolutionVal = document.getElementById("resolution-val");
+const depthInput = document.getElementById("depth");
+const depthVal = document.getElementById("depth-val");
+const invertInput = document.getElementById("invert");
+const smoothInput = document.getElementById("smooth");
+
+let selectedFile = null;
+
+resolutionInput.addEventListener("input", () => {
+  resolutionVal.textContent = resolutionInput.value;
+});
+depthInput.addEventListener("input", () => {
+  depthVal.textContent = parseFloat(depthInput.value).toFixed(2);
+});
+
+dropzone.addEventListener("click", () => fileInput.click());
+dropzone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    setFile(e.dataTransfer.files[0]);
+  }
+});
+fileInput.addEventListener("change", () => {
+  if (fileInput.files && fileInput.files[0]) setFile(fileInput.files[0]);
+});
+
+function setFile(file) {
+  if (!/^image\/(png|jpeg)$/.test(file.type)) {
+    setStatus("Formato não suportado. Use JPEG ou PNG.", true);
+    return;
+  }
+  selectedFile = file;
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+  convertBtn.disabled = false;
+  setStatus("");
+}
+
+function setStatus(message, isError = false) {
+  statusEl.textContent = message;
+  statusEl.classList.toggle("error", isError);
+}
+
+convertBtn.addEventListener("click", async () => {
+  if (!selectedFile) return;
+  convertBtn.disabled = true;
+  downloadLink.style.display = "none";
+  setStatus("Convertendo imagem em modelo 3D...");
+
+  try {
+    const params = new URLSearchParams({
+      resolution: resolutionInput.value,
+      depth_scale: depthInput.value,
+      invert: invertInput.checked,
+      smooth: smoothInput.checked,
+    });
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    const response = await fetch(`/convert?${params.toString()}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `Erro HTTP ${response.status}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    renderGlb(buffer);
+
+    const blob = new Blob([buffer], { type: "model/gltf-binary" });
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.style.display = "block";
+    setStatus("Modelo 3D gerado com sucesso.");
+  } catch (err) {
+    setStatus(err.message || "Falha ao converter a imagem.", true);
+  } finally {
+    convertBtn.disabled = false;
+  }
+});
+
+// --- three.js viewer setup ---
+const canvas = document.getElementById("viewer");
+const wrap = document.getElementById("viewer-wrap");
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+camera.position.set(0, 0, 1.4);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(1, 1, 2);
+scene.add(dirLight);
+const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+dirLight2.position.set(-1, -0.5, -1);
+scene.add(dirLight2);
+
+let currentModel = null;
+const loader = new GLTFLoader();
+
+function renderGlb(arrayBuffer) {
+  loader.parse(arrayBuffer, "", (gltf) => {
+    if (currentModel) {
+      scene.remove(currentModel);
+      currentModel = null;
+    }
+    currentModel = gltf.scene;
+    scene.add(currentModel);
+    frameCamera(currentModel);
+    hintEl.style.display = "none";
+  }, (err) => {
+    console.error(err);
+    setStatus("Não foi possível renderizar o modelo 3D.", true);
+  });
+}
+
+function frameCamera(object) {
+  const box = new THREE.Box3().setFromObject(object);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z, 0.01);
+  const distance = maxDim / (2 * Math.tan((Math.PI * camera.fov) / 360)) * 1.6;
+
+  controls.target.copy(center);
+  camera.position.set(center.x, center.y, center.z + distance);
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+  controls.update();
+}
+
+function resize() {
+  const width = wrap.clientWidth;
+  const height = wrap.clientHeight;
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
+resize();
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

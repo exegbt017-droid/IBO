@@ -31,9 +31,18 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-A documentação interativa fica disponível em `http://localhost:8000/docs`.
+Abra `http://localhost:8000/` para usar o **visualizador web**: escolha um
+JPEG ou PNG, ajuste os parâmetros e veja o modelo 3D renderizado
+diretamente no navegador (via three.js), com opção de baixar o `.glb`
+gerado.
+
+A documentação interativa da API fica em `http://localhost:8000/docs`.
 
 ## Endpoints
+
+### `GET /`
+
+Visualizador web (upload de JPEG/PNG + preview 3D via three.js/glTF).
 
 ### `GET /health`
 
