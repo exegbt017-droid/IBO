@@ -1,0 +1,95 @@
+{
+  "id": "01",
+  "nome": { "pt-BR": "Clareira da Mata Atlântica", "es": "Claro de la Mata Atlántica" },
+  "ambiente": {
+    "tipo": "procedural",
+    "preset": "mata-atlantica-clareira",
+    "url": null
+  },
+  "narrativa": {
+    "intro_video_legenda": {
+      "pt-BR": "No Brasil, uma das figuras mais emblemáticas do imaginário popular é o Curupira, guardião das florestas e dos animais. De cabelos vermelhos como o fogo e pés voltados para trás, ele confunde caçadores e todos aqueles que ameaçam a natureza.",
+      "es": "En Brasil, una de las figuras más emblemáticas del imaginario popular es el Curupira, guardián de los bosques y de los animales. De cabellos rojos como el fuego y pies vueltos hacia atrás, confunde a los cazadores y a todos los que amenazan la naturaleza."
+    },
+    "desafio_legenda": {
+      "pt-BR": "Inspirado pelo espírito desafiador das Olimpíadas de Biologia, o Curupira resolveu testar os futuros estudiosos da natureza: misturou animais de diferentes regiões e ambientes, criando um desafio que só poderá ser resolvido por aqueles que realmente compreendem o mundo natural.",
+      "es": "Inspirado por el espíritu desafiante de las Olimpiadas de Biología, el Curupira decidió poner a prueba a los futuros estudiosos de la naturaleza: mezcló animales de diferentes regiones y ambientes, creando un desafío que solo podrá resolver quien realmente comprenda el mundo natural."
+    }
+  },
+  "curupira": {
+    "dialogos": [
+      {
+        "id": "boas-vindas",
+        "texto": {
+          "pt-BR": "Ah, mais um explorador! Bem-vindo à minha clareira. Sinta o cheiro da mata... mas cuidado, nem tudo aqui é o que parece.",
+          "es": "¡Ah, otro explorador! Bienvenido a mi claro. Siente el olor del bosque... pero cuidado, no todo aquí es lo que parece."
+        }
+      },
+      {
+        "id": "missao",
+        "texto": {
+          "pt-BR": "Escondi três animais por perto. Um deles não pertence a esta mata — veio de muito, muito longe. Encontre os três, investigue cada um e descubra qual é o intruso.",
+          "es": "Escondí tres animales por aquí cerca. Uno de ellos no pertenece a este bosque — vino de muy, muy lejos. Encuentra a los tres, investiga a cada uno y descubre cuál es el intruso."
+        }
+      },
+      {
+        "id": "acerto",
+        "texto": {
+          "pt-BR": "Muito bem, jovem naturalista! Seus olhos enxergam o que poucos veem.",
+          "es": "¡Muy bien, joven naturalista! Tus ojos ven lo que pocos ven."
+        }
+      },
+      {
+        "id": "erro",
+        "texto": {
+          "pt-BR": "Hmm... olhe de novo. A resposta está na origem de cada bicho, não na aparência.",
+          "es": "Hmm... mira de nuevo. La respuesta está en el origen de cada animal, no en su apariencia."
+        }
+      },
+      {
+        "id": "conclusao",
+        "texto": {
+          "pt-BR": "Você provou seu valor nesta clareira. A mata sussurra o caminho do próximo posto...",
+          "es": "Has demostrado tu valor en este claro. El bosque susurra el camino hacia el próximo puesto..."
+        }
+      }
+    ]
+  },
+  "animais": [
+    { "animal_id": "sagui-tufo-branco", "ocorre_no_local": true, "posicao": [-2.4, 0, -1.5] },
+    { "animal_id": "jiboia", "ocorre_no_local": true, "posicao": [1.8, 0, -2.2] },
+    { "animal_id": "pinguim-imperador", "ocorre_no_local": false, "posicao": [0.2, 0, -3.6] }
+  ],
+  "missao": {
+    "descricao": {
+      "pt-BR": "Observe os três animais da clareira. Um deles não deveria estar na Mata Atlântica.",
+      "es": "Observa los tres animales del claro. Uno de ellos no debería estar en la Mata Atlántica."
+    },
+    "pergunta_final_id": "intruso"
+  },
+  "perguntas": [
+    {
+      "id": "intruso",
+      "texto": {
+        "pt-BR": "Qual animal é o intruso — não pertence à Mata Atlântica?",
+        "es": "¿Qué animal es el intruso — no pertenece a la Mata Atlántica?"
+      },
+      "opcoes": [
+        { "animal_id": "sagui-tufo-branco", "texto": { "pt-BR": "Sagui-de-tufo-branco", "es": "Tití de copete blanco" } },
+        { "animal_id": "jiboia", "texto": { "pt-BR": "Jiboia", "es": "Boa constrictor" } },
+        { "animal_id": "pinguim-imperador", "texto": { "pt-BR": "Pinguim-imperador", "es": "Pingüino emperador" } }
+      ],
+      "correta": "pinguim-imperador",
+      "pontos": 40
+    }
+  ],
+  "pistas": {
+    "proximo_posto": {
+      "pt-BR": "Siga o som da água corrente até encontrar o próximo QR Code, marcado com uma pegada voltada para trás.",
+      "es": "Sigue el sonido del agua corriente hasta encontrar el próximo código QR, marcado con una huella vuelta hacia atrás."
+    }
+  },
+  "pontuacao_maxima": 100,
+  "pontos_por_animal_investigado": 20,
+  "proximo_posto": "02"
+}

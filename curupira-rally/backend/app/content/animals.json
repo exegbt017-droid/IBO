@@ -1,0 +1,56 @@
+[
+  {
+    "id": "sagui-tufo-branco",
+    "nome_comum": { "pt-BR": "Sagui-de-tufo-branco", "es": "Tití de copete blanco" },
+    "nome_cientifico": "Callithrix jacchus",
+    "genero": "Callithrix",
+    "especie": "jacchus",
+    "origem": "Nordeste do Brasil",
+    "paises_de_ocorrencia": ["Brasil"],
+    "biomas": ["Mata Atlântica", "Caatinga"],
+    "cor_placeholder": "#c9a15a",
+    "forma_placeholder": "primata",
+    "chave_identificacao": {
+      "possui_pelos": true,
+      "numero_patas": 4,
+      "possui_cauda": true,
+      "habito": "arboricola"
+    }
+  },
+  {
+    "id": "jiboia",
+    "nome_comum": { "pt-BR": "Jiboia", "es": "Boa constrictor" },
+    "nome_cientifico": "Boa constrictor",
+    "genero": "Boa",
+    "especie": "constrictor",
+    "origem": "América do Sul e Central",
+    "paises_de_ocorrencia": ["Brasil", "Argentina", "Colômbia", "México"],
+    "biomas": ["Mata Atlântica", "Amazônia", "Cerrado"],
+    "cor_placeholder": "#5a7d4a",
+    "forma_placeholder": "serpente",
+    "chave_identificacao": {
+      "possui_pelos": false,
+      "numero_patas": 0,
+      "possui_cauda": true,
+      "habito": "terrestre"
+    }
+  },
+  {
+    "id": "pinguim-imperador",
+    "nome_comum": { "pt-BR": "Pinguim-imperador", "es": "Pingüino emperador" },
+    "nome_cientifico": "Aptenodytes forsteri",
+    "genero": "Aptenodytes",
+    "especie": "forsteri",
+    "origem": "Antártida",
+    "paises_de_ocorrencia": ["Antártida (território internacional)"],
+    "biomas": ["Gelo polar antártico"],
+    "cor_placeholder": "#1c1c26",
+    "forma_placeholder": "ave",
+    "chave_identificacao": {
+      "possui_pelos": false,
+      "numero_patas": 2,
+      "possui_cauda": false,
+      "habito": "aquatico_polar"
+    }
+  }
+]
