@@ -3,5 +3,7 @@ __pycache__/
 .venv/
 *.db
 node_modules/
-dist/
 .vite/
+
+# A interface construida (backend/app/static/web/) e versionada de proposito:
+# e ela que permite rodar o projeto so com Python, sem precisar de Node.

@@ -13,8 +13,10 @@ export class SceneManager {
     this.renderer.shadowMap.enabled = true;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0d1a12);
-    this.scene.fog = new THREE.Fog(0x0d1a12, 8, 26);
+    this.scene.background = createSkyGradient();
+    // Ajustada em frameToFit conforme a distancia real da camera, para a mata
+    // ao fundo dar profundidade sem encobrir os animais da missao.
+    this.scene.fog = new THREE.Fog(0x2c5a33, 12, 34);
 
     this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
     this.camera.position.set(0, 2.6, 6.5);
@@ -95,6 +97,46 @@ export class SceneManager {
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+    if (this._framedPoints) this.frameToFit(this._framedPoints);
+  }
+
+  /**
+   * Enquadra a camera para que todos os pontos de interesse (animais, Curupira)
+   * caibam na tela. Em celular na vertical o campo de visao horizontal e bem
+   * estreito, entao sem isso um animal posicionado mais para o lado ficaria
+   * fora da tela e o participante nao conseguiria completar a missao.
+   * Recalculado no resize, cobrindo tambem a rotacao do aparelho.
+   */
+  frameToFit(points, { margin = 1.25, minDistance = 4.5 } = {}) {
+    if (!points || points.length === 0) return;
+    this._framedPoints = points;
+
+    const box = new THREE.Box3();
+    points.forEach((p) => box.expandByPoint(new THREE.Vector3(p[0], p[1], p[2])));
+    // Folga lateral para respiro e vertical para a altura do Curupira.
+    box.expandByVector(new THREE.Vector3(0.8, 0.55, 0.8));
+
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+
+    const vFov = THREE.MathUtils.degToRad(this.camera.fov);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
+
+    const distV = size.y / 2 / Math.tan(vFov / 2);
+    const distH = size.x / 2 / Math.tan(hFov / 2);
+    const distance = Math.max(distV, distH) * margin + size.z / 2;
+    const finalDistance = Math.max(distance, minDistance);
+
+    // Alvo um pouco acima do chao: deixa os animais no terco inferior da tela,
+    // longe do painel de missao que ocupa a base em celulares.
+    this.controls.target.set(center.x, center.y + 0.75, center.z);
+    this.controls.maxDistance = Math.max(this.controls.maxDistance, finalDistance * 1.6);
+    this.camera.position.set(center.x, center.y + finalDistance * 0.3, center.z + finalDistance);
+    this.camera.updateProjectionMatrix();
+
+    this.scene.fog.near = finalDistance * 0.9;
+    this.scene.fog.far = finalDistance + 26;
+    this.controls.update();
   }
 
   _tick() {
@@ -104,4 +146,24 @@ export class SceneManager {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
+}
+
+/** Ceu em degrade: da luz filtrada pelas copas ate a penumbra do sub-bosque. */
+function createSkyGradient() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 256;
+
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+  gradient.addColorStop(0, "#132b1d");
+  gradient.addColorStop(0.45, "#1d3f27");
+  gradient.addColorStop(0.75, "#2c5a33");
+  gradient.addColorStop(1, "#3b6b3a");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 2, 256);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
