@@ -46,6 +46,21 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8040
 ```
 
+## Modo offline (plano B para o evento)
+
+Gera um arquivo `.html` por posto que roda **sozinho**: sem servidor, sem
+internet, com a experiência inteira (cena 3D, Curupira, animais, desafios,
+fontes) embutida no próprio arquivo.
+
+```bash
+cd frontend && npm run build:offline
+# gera offline/posto-01.html
+```
+
+Basta abrir o arquivo no navegador — ou copiá-lo para o celular. Útil se a
+conexão falhar no local do evento. Nesse modo a pontuação fica salva no
+próprio aparelho, já que não há servidor para receber.
+
 ## Desenvolvendo a interface
 
 A interface construída fica em `backend/app/static/web/`. Se você alterar
@@ -78,6 +93,7 @@ start.sh    Sobe o projeto inteiro com um comando
 backend/    FastAPI: conteudo dos postos/animais (JSON), progresso (SQLite)
             e a interface ja construida (app/static/web/)
 frontend/   Codigo-fonte da interface: Vite + Three.js, cena 3D, i18n
+offline/    Arquivos .html autossuficientes, um por posto (plano B)
 docs/       Documentacao de arquitetura
 ```
 

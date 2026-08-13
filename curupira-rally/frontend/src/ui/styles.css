@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap");
+/* Fontes embutidas (ver scripts/fetch-fonts.mjs): o projeto precisa manter a
+   identidade visual em campo, onde pode nao haver conexao. */
+@import "./fonts.css";
 
 :root {
   color-scheme: dark;
