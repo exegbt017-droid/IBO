@@ -35,6 +35,7 @@ export class SceneManager {
     this._raycaster = new THREE.Raycaster();
     this._pointer = new THREE.Vector2();
     this.canvas.addEventListener("pointerdown", this._onPointerDown.bind(this));
+    this.canvas.addEventListener("pointerup", this._onPointerUp.bind(this));
 
     window.addEventListener("resize", () => this.resize());
     this.resize();
@@ -43,9 +44,92 @@ export class SceneManager {
     this.renderer.setAnimationLoop(() => this._tick());
   }
 
+  /**
+   * Adapta a cena a um ambiente de panorama: a foto e o proprio fundo, entao a
+   * nevoa e o ceu de floresta sairiam por cima dela. A luz passa a ser neutra e
+   * puxada da media de cores da foto, para que o Curupira e os animais parecam
+   * iluminados pelo mesmo ambiente. A rotacao fica presa a abertura da imagem,
+   * assim o participante nunca alcanca a borda.
+   */
+  applyPanoramaProfile(textura, fovHorizontal, alturaDosOlhos, fovVertical, giroInicial = 0) {
+    this.scene.fog = null;
+    this._panorama = true;
+
+    // A foto e a vista a partir do ponto exato onde o video foi gravado. Se a
+    // camera sair desse ponto, o piso da imagem deixa de coincidir com o chao
+    // onde os personagens pisam e eles parecem flutuar. Entao a camera fica
+    // parada ali e o participante apenas olha em volta.
+    this.controls.enabled = false;
+    this.camera.position.set(0, alturaDosOlhos, 0);
+    this.camera.fov = 68;
+    this.camera.updateProjectionMatrix();
+
+    this._coberturaH = fovHorizontal;
+    this._coberturaV = fovVertical;
+    const meiaVertical = THREE.MathUtils.degToRad(this.camera.fov) / 2;
+    const meiaHorizontal = Math.atan(Math.tan(meiaVertical) * this.camera.aspect);
+    this._limiteGiro = Math.max(0, fovHorizontal / 2 - meiaHorizontal);
+    this._limiteInclinacao = Math.max(0, fovVertical / 2 - meiaVertical);
+
+    this._configurarOlharEmVolta(giroInicial);
+
+    const corMedia = mediaDaTextura(textura);
+    this.scene.background = corMedia;
+
+    this.scene.remove(this._hemisphere);
+    this._hemisphere = new THREE.HemisphereLight(corMedia, corMedia.clone().multiplyScalar(0.45), 1.5);
+    this.scene.add(this._hemisphere);
+
+    this._sun.color.set(0xffffff);
+    this._sun.intensity = 0.85;
+    this._fill.intensity = 0.15;
+  }
+
+  /** Arrastar gira a vista no lugar, dentro do trecho coberto pela foto. */
+  _configurarOlharEmVolta(giroInicial = 0) {
+    // Giro positivo no conteudo significa "comeca olhando para a direita".
+    this._giro = -giroInicial;
+    this._inclinacao = 0;
+    let arrastando = false;
+    let ultimo = { x: 0, y: 0 };
+
+    const aplicar = () => {
+      this._giro = THREE.MathUtils.clamp(this._giro, -this._limiteGiro, this._limiteGiro);
+      this._inclinacao = THREE.MathUtils.clamp(
+        this._inclinacao, -this._limiteInclinacao, this._limiteInclinacao
+      );
+      this.camera.rotation.set(this._inclinacao, this._giro, 0, "YXZ");
+    };
+    aplicar();
+
+    this.canvas.addEventListener("pointerdown", (e) => {
+      arrastando = true;
+      ultimo = { x: e.clientX, y: e.clientY };
+    });
+    this.canvas.addEventListener("pointermove", (e) => {
+      if (!arrastando) return;
+      const porPixel = THREE.MathUtils.degToRad(this.camera.fov) / this.canvas.clientHeight;
+      this._giro -= (e.clientX - ultimo.x) * porPixel;
+      this._inclinacao -= (e.clientY - ultimo.y) * porPixel;
+      ultimo = { x: e.clientX, y: e.clientY };
+      aplicar();
+    });
+    const soltar = () => { arrastando = false; };
+    this.canvas.addEventListener("pointerup", soltar);
+    this.canvas.addEventListener("pointercancel", soltar);
+    window.addEventListener("resize", () => {
+      const meiaVertical = THREE.MathUtils.degToRad(this.camera.fov) / 2;
+      const meiaHorizontal = Math.atan(Math.tan(meiaVertical) * this.camera.aspect);
+      this._limiteGiro = Math.max(0, this._coberturaH / 2 - meiaHorizontal);
+      this._limiteInclinacao = Math.max(0, this._coberturaV / 2 - meiaVertical);
+      aplicar();
+    });
+  }
+
   _addLights() {
     const ambient = new THREE.HemisphereLight(0x9fd8a5, 0x1a2b17, 0.9);
     this.scene.add(ambient);
+    this._hemisphere = ambient;
 
     const sun = new THREE.DirectionalLight(0xfff2d0, 1.4);
     sun.position.set(6, 9, 4);
@@ -56,10 +140,12 @@ export class SceneManager {
     sun.shadow.camera.top = 10;
     sun.shadow.camera.bottom = -10;
     this.scene.add(sun);
+    this._sun = sun;
 
     const fill = new THREE.DirectionalLight(0x4a6fa5, 0.25);
     fill.position.set(-5, 4, -6);
     this.scene.add(fill);
+    this._fill = fill;
   }
 
   addUpdatable(fn) {
@@ -75,6 +161,17 @@ export class SceneManager {
   }
 
   _onPointerDown(event) {
+    // Registra onde comecou; o toque so vale como clique se nao virar arrasto
+    // (arrastar e como o participante olha em volta).
+    this._inicioToque = { x: event.clientX, y: event.clientY };
+  }
+
+  _onPointerUp(event) {
+    const inicio = this._inicioToque;
+    this._inicioToque = null;
+    if (!inicio) return;
+    if (Math.hypot(event.clientX - inicio.x, event.clientY - inicio.y) > 8) return;
+
     const rect = this.canvas.getBoundingClientRect();
     this._pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this._pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -108,6 +205,9 @@ export class SceneManager {
    * Recalculado no resize, cobrindo tambem a rotacao do aparelho.
    */
   frameToFit(points, { margin = 1.25, minDistance = 4.5 } = {}) {
+    // No panorama a camera fica fixa no ponto de captura da foto: reposiciona-la
+    // quebraria o alinhamento entre a imagem e os personagens.
+    if (this._panorama) return;
     if (!points || points.length === 0) return;
     this._framedPoints = points;
 
@@ -131,11 +231,15 @@ export class SceneManager {
     // longe do painel de missao que ocupa a base em celulares.
     this.controls.target.set(center.x, center.y + 0.75, center.z);
     this.controls.maxDistance = Math.max(this.controls.maxDistance, finalDistance * 1.6);
-    this.camera.position.set(center.x, center.y + finalDistance * 0.3, center.z + finalDistance);
+    const alturaRelativa = this._panorama ? 0.1 : 0.3;
+    this.camera.position.set(center.x, center.y + finalDistance * alturaRelativa, center.z + finalDistance);
     this.camera.updateProjectionMatrix();
 
-    this.scene.fog.near = finalDistance * 0.9;
-    this.scene.fog.far = finalDistance + 26;
+    // Ambiente de panorama nao usa nevoa: a foto e o proprio fundo.
+    if (this.scene.fog) {
+      this.scene.fog.near = finalDistance * 0.9;
+      this.scene.fog.far = finalDistance + 26;
+    }
     this.controls.update();
   }
 
@@ -143,7 +247,7 @@ export class SceneManager {
     const delta = this.clock.getDelta();
     const elapsed = this.clock.getElapsedTime();
     this._updatables.forEach((fn) => fn(delta, elapsed));
-    this.controls.update();
+    if (this.controls.enabled) this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
 }
@@ -166,4 +270,22 @@ function createSkyGradient() {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+/** Cor media da foto, usada para iluminar personagens com a luz do proprio ambiente. */
+function mediaDaTextura(textura) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 32;
+  canvas.height = 32;
+
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(textura.image, 0, 0, 32, 32);
+  const { data } = ctx.getImageData(0, 0, 32, 32);
+
+  let r = 0, g = 0, b = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    r += data[i]; g += data[i + 1]; b += data[i + 2];
+  }
+  const n = data.length / 4;
+  return new THREE.Color(r / n / 255, g / n / 255, b / n / 255);
 }

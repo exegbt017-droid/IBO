@@ -17,6 +17,10 @@ export function spawnAnimal(sceneManager, entry, onSelect) {
   group.add(marker);
   group.userData.marker = marker;
 
+  // Area de toque invisivel e folgada ao redor do animal: no celular, acertar
+  // uma serpente fina rente ao chao com o dedo seria quase impossivel.
+  group.add(buildTouchArea(group));
+
   sceneManager.scene.add(group);
   sceneManager.addUpdatable((_delta, elapsed) => {
     group.position.y = posicao[1] + Math.sin(elapsed * 1.6 + posicao[0]) * 0.08;
@@ -105,4 +109,23 @@ function buildPlaceholder(forma, colorHex) {
   });
 
   return group;
+}
+
+/**
+ * Esfera invisivel que cobre o animal com folga, servindo de alvo para o toque.
+ * Invisivel por opacidade (e nao por `visible`), porque o raycaster ignora
+ * objetos escondidos e ela precisa continuar sendo atingida.
+ */
+function buildTouchArea(group) {
+  const caixa = new THREE.Box3().setFromObject(group);
+  const esfera = caixa.getBoundingSphere(new THREE.Sphere());
+  const centro = group.worldToLocal(esfera.center.clone());
+
+  const area = new THREE.Mesh(
+    new THREE.SphereGeometry(Math.max(esfera.radius * 1.35, 0.45), 12, 10),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  area.position.copy(centro);
+  area.renderOrder = -1;
+  return area;
 }

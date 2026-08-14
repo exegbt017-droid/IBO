@@ -1,69 +1,102 @@
 {
   "id": "01",
-  "nome": { "pt-BR": "Clareira da Mata Atlântica", "es": "Claro de la Mata Atlántica" },
+  "nome": {
+    "pt-BR": "Sala de aula",
+    "es": "Aula"
+  },
   "ambiente": {
-    "tipo": "procedural",
-    "preset": "mata-atlantica-clareira",
-    "url": null
+    "tipo": "panorama",
+    "url": "/assets/postos/posto_01/panorama.jpg",
+    "fov_horizontal_graus": 126.0,
+    "giro_inicial_graus": 20
   },
   "narrativa": {
     "intro_video_legenda": {
-      "pt-BR": "No Brasil, uma das figuras mais emblemáticas do imaginário popular é o Curupira, guardião das florestas e dos animais. De cabelos vermelhos como o fogo e pés voltados para trás, ele confunde caçadores e todos aqueles que ameaçam a natureza.",
-      "es": "En Brasil, una de las figuras más emblemáticas del imaginario popular es el Curupira, guardián de los bosques y de los animales. De cabellos rojos como el fuego y pies vueltos hacia atrás, confunde a los cazadores y a todos los que amenazan la naturaleza."
+      "pt-BR": "O Curupira nao gosta de paredes. Mesmo assim, atravessou o corredor e entrou aqui — porque foi nesta sala que os futuros naturalistas aprenderam os nomes das coisas.",
+      "es": "Al Curupira no le gustan las paredes. Aun asi, cruzo el pasillo y entro aqui — porque fue en esta aula donde los futuros naturalistas aprendieron los nombres de las cosas."
     },
     "desafio_legenda": {
-      "pt-BR": "Inspirado pelo espírito desafiador das Olimpíadas de Biologia, o Curupira resolveu testar os futuros estudiosos da natureza: misturou animais de diferentes regiões e ambientes, criando um desafio que só poderá ser resolvido por aqueles que realmente compreendem o mundo natural.",
-      "es": "Inspirado por el espíritu desafiante de las Olimpiadas de Biología, el Curupira decidió poner a prueba a los futuros estudiosos de la naturaleza: mezcló animales de diferentes regiones y ambientes, creando un desafío que solo podrá resolver quien realmente comprenda el mundo natural."
+      "pt-BR": "E entre as carteiras vazias ele soltou tres bichos, para ver quem sabe reconhece-los longe do lugar onde vivem.",
+      "es": "Y entre los pupitres vacios solto tres animales, para ver quien sabe reconocerlos lejos del lugar donde viven."
     }
   },
   "curupira": {
+    "posicao": [
+      1.42,
+      0,
+      -4.37
+    ],
     "dialogos": [
       {
         "id": "boas-vindas",
         "texto": {
-          "pt-BR": "Ah, mais um explorador! Bem-vindo à minha clareira. Sinta o cheiro da mata... mas cuidado, nem tudo aqui é o que parece.",
-          "es": "¡Ah, otro explorador! Bienvenido a mi claro. Siente el olor del bosque... pero cuidado, no todo aquí es lo que parece."
+          "pt-BR": "Entao e aqui que voces estudam a mata sem pisar nela? Pois bem. Trouxe a mata ate voces.",
+          "es": "¿Asi que aqui estudian el bosque sin pisarlo? Muy bien. Traje el bosque hasta ustedes."
         }
       },
       {
         "id": "missao",
         "texto": {
-          "pt-BR": "Escondi três animais por perto. Um deles não pertence a esta mata — veio de muito, muito longe. Encontre os três, investigue cada um e descubra qual é o intruso.",
-          "es": "Escondí tres animales por aquí cerca. Uno de ellos no pertenece a este bosque — vino de muy, muy lejos. Encuentra a los tres, investiga a cada uno y descubre cuál es el intruso."
+          "pt-BR": "Tres bichos estao soltos entre as carteiras. Dois vivem na Mata Atlantica, do lado de fora destas paredes. Um veio de muito mais longe. Descubra qual.",
+          "es": "Tres animales andan sueltos entre los pupitres. Dos viven en la Mata Atlantica, al otro lado de estas paredes. Uno vino de mucho mas lejos. Descubre cual."
         }
       },
       {
         "id": "acerto",
         "texto": {
-          "pt-BR": "Muito bem, jovem naturalista! Seus olhos enxergam o que poucos veem.",
-          "es": "¡Muy bien, joven naturalista! Tus ojos ven lo que pocos ven."
+          "pt-BR": "Isso mesmo. Nome e lugar andam juntos: saber onde um bicho vive e metade de conhece-lo.",
+          "es": "Exacto. Nombre y lugar van juntos: saber donde vive un animal es la mitad de conocerlo."
         }
       },
       {
         "id": "erro",
         "texto": {
-          "pt-BR": "Hmm... olhe de novo. A resposta está na origem de cada bicho, não na aparência.",
-          "es": "Hmm... mira de nuevo. La respuesta está en el origen de cada animal, no en su apariencia."
+          "pt-BR": "Nao e esse. Leia de novo a ficha: o que diz sobre os biomas onde ele ocorre?",
+          "es": "No es ese. Lee de nuevo la ficha: ¿que dice sobre los biomas donde ocurre?"
         }
       },
       {
         "id": "conclusao",
         "texto": {
-          "pt-BR": "Você provou seu valor nesta clareira. A mata sussurra o caminho do próximo posto...",
-          "es": "Has demostrado tu valor en este claro. El bosque susurra el camino hacia el próximo puesto..."
+          "pt-BR": "Servem, esses estudos entre paredes. Agora venha ver os bichos onde eles moram.",
+          "es": "Sirven, estos estudios entre paredes. Ahora ven a ver a los animales donde viven."
         }
       }
     ]
   },
   "animais": [
-    { "animal_id": "sagui-tufo-branco", "ocorre_no_local": true, "posicao": [-2.4, 0, -1.5] },
-    { "animal_id": "jiboia", "ocorre_no_local": true, "posicao": [1.8, 0, -2.2] },
-    { "animal_id": "pinguim-imperador", "ocorre_no_local": false, "posicao": [0.2, 0, -3.6] }
+    {
+      "animal_id": "sagui-tufo-branco",
+      "ocorre_no_local": true,
+      "posicao": [
+        -1.69,
+        0,
+        -3.63
+      ]
+    },
+    {
+      "animal_id": "jiboia",
+      "ocorre_no_local": true,
+      "posicao": [
+        2.71,
+        0,
+        -3.47
+      ]
+    },
+    {
+      "animal_id": "pinguim-imperador",
+      "ocorre_no_local": false,
+      "posicao": [
+        0.84,
+        0,
+        -5.94
+      ]
+    }
   ],
   "missao": {
     "descricao": {
-      "pt-BR": "Observe os três animais da clareira. Um deles não deveria estar na Mata Atlântica.",
-      "es": "Observa los tres animales del claro. Uno de ellos no debería estar en la Mata Atlántica."
+      "pt-BR": "Investigue os tres animais soltos na sala. Um deles nao ocorre na Mata Atlantica.",
+      "es": "Investiga los tres animales sueltos en el aula. Uno de ellos no ocurre en la Mata Atlantica."
     },
     "pergunta_final_id": "intruso"
   },
@@ -71,13 +104,31 @@
     {
       "id": "intruso",
       "texto": {
-        "pt-BR": "Qual animal é o intruso — não pertence à Mata Atlântica?",
-        "es": "¿Qué animal es el intruso — no pertenece a la Mata Atlántica?"
+        "pt-BR": "Qual animal nao ocorre na Mata Atlantica?",
+        "es": "¿Que animal no ocurre en la Mata Atlantica?"
       },
       "opcoes": [
-        { "animal_id": "sagui-tufo-branco", "texto": { "pt-BR": "Sagui-de-tufo-branco", "es": "Tití de copete blanco" } },
-        { "animal_id": "jiboia", "texto": { "pt-BR": "Jiboia", "es": "Boa constrictor" } },
-        { "animal_id": "pinguim-imperador", "texto": { "pt-BR": "Pinguim-imperador", "es": "Pingüino emperador" } }
+        {
+          "animal_id": "sagui-tufo-branco",
+          "texto": {
+            "pt-BR": "Sagui-de-tufo-branco",
+            "es": "Titi de copete blanco"
+          }
+        },
+        {
+          "animal_id": "jiboia",
+          "texto": {
+            "pt-BR": "Jiboia",
+            "es": "Boa constrictor"
+          }
+        },
+        {
+          "animal_id": "pinguim-imperador",
+          "texto": {
+            "pt-BR": "Pinguim-imperador",
+            "es": "Pinguino emperador"
+          }
+        }
       ],
       "correta": "pinguim-imperador",
       "pontos": 40
@@ -85,8 +136,8 @@
   ],
   "pistas": {
     "proximo_posto": {
-      "pt-BR": "Siga o som da água corrente até encontrar o próximo QR Code, marcado com uma pegada voltada para trás.",
-      "es": "Sigue el sonido del agua corriente hasta encontrar el próximo código QR, marcado con una huella vuelta hacia atrás."
+      "pt-BR": "Saia por onde o Curupira entrou e procure a arvore mais antiga do patio. O proximo QR Code espera na sombra dela.",
+      "es": "Sal por donde entro el Curupira y busca el arbol mas antiguo del patio. El proximo codigo QR espera en su sombra."
     }
   },
   "pontuacao_maxima": 100,

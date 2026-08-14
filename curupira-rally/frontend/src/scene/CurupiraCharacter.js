@@ -62,10 +62,15 @@ export class CurupiraCharacter {
     this.group.visible = false;
   }
 
-  async enter(targetPosition = new THREE.Vector3(0, 0, -3.5)) {
+  /** `posicao` e o ponto onde ele para, vindo do conteudo do posto. */
+  async enter(posicao = [0, 0, -3.5]) {
     if (this._entered) return;
     this._entered = true;
     this.group.visible = true;
+
+    const targetPosition = new THREE.Vector3(posicao[0], posicao[1], posicao[2]);
+    // Entra pelo fundo, alinhado ao ponto de chegada.
+    this.group.position.set(targetPosition.x, 0, targetPosition.z - 8);
 
     const start = this.group.position.clone();
     const duration = 1.6;
@@ -76,7 +81,8 @@ export class CurupiraCharacter {
         const t = Math.min(1, (performance.now() - startTime) / (duration * 1000));
         const eased = 1 - Math.pow(1 - t, 3);
         this.group.position.lerpVectors(start, targetPosition, eased);
-        this.group.lookAt(0, this.group.position.y, targetPosition.z + 5);
+        // Chega de costas e se vira para o participante, que esta na origem.
+        this.group.lookAt(0, this.group.position.y, 0);
         if (t < 1) requestAnimationFrame(step);
         else resolve();
       };

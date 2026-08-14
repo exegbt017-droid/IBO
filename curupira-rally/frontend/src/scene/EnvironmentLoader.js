@@ -5,12 +5,19 @@ const loader = new GLTFLoader();
 
 /**
  * Carrega o ambiente de um posto na cena.
- * - tipo "glb": carrega o .glb gerado pelo pipeline de reconstrucao 3D (fotogrametria offline).
- * - tipo "procedural": gera uma clareira de floresta simples (usado enquanto nao ha video real).
- * As duas fontes produzem o mesmo resultado do ponto de vista do resto do sistema: um Object3D
- * adicionado a cena, sobre o qual Curupira e os animais sao posicionados.
+ * - tipo "panorama": foto panoramica do local real (gerada por tools/video_para_panorama.py)
+ *   projetada em uma tela curva ao redor da cena. E o caminho padrao para os postos: um giro
+ *   de camera no local ja basta para produzi-la.
+ * - tipo "glb": malha 3D reconstruida por fotogrametria, quando houver video adequado.
+ * - tipo "procedural": clareira gerada em codigo, usada quando nao ha material do local.
+ * As tres fontes entregam a mesma coisa para o resto do sistema: um Object3D na cena, sobre o
+ * qual o Curupira e os animais sao posicionados.
  */
 export async function loadEnvironment(sceneManager, ambiente) {
+  if (ambiente.tipo === "panorama" && ambiente.url) {
+    return buildPanorama(sceneManager, ambiente);
+  }
+
   if (ambiente.tipo === "glb" && ambiente.url) {
     const gltf = await loader.loadAsync(ambiente.url);
     gltf.scene.traverse((node) => {
@@ -24,6 +31,70 @@ export async function loadEnvironment(sceneManager, ambiente) {
   }
 
   return buildProceduralClearing(sceneManager);
+}
+
+// Raio da tela curva, em metros. Quanto mais proximo do tamanho real do
+// ambiente, melhor o piso da foto se alinha com o chao onde os personagens
+// pisam — com uma tela muito distante eles pareceriam flutuar.
+const RAIO_PANORAMA = 13;
+const ALTURA_DOS_OLHOS = 1.55;
+
+/**
+ * Projeta o panorama em um trecho de cilindro ao redor da cena.
+ *
+ * O panorama nasce de um giro da camera no local, entao ele cobre um arco — nao os 360 graus.
+ * O arco e montado centrado na direcao inicial de visao e a rotacao do participante e limitada
+ * a essa abertura, para que ele nunca alcance a borda da foto.
+ */
+async function buildPanorama(sceneManager, ambiente) {
+  const textura = await new THREE.TextureLoader().loadAsync(ambiente.url);
+  textura.colorSpace = THREE.SRGBColorSpace;
+  textura.anisotropy = sceneManager.renderer.capabilities.getMaxAnisotropy();
+  // A tela e vista por dentro (BackSide), o que inverteria a foto: desinverte.
+  textura.wrapS = THREE.RepeatWrapping;
+  textura.repeat.x = -1;
+  textura.offset.x = 1;
+
+  const fovH = THREE.MathUtils.degToRad(ambiente.fov_horizontal_graus ?? 120);
+  const proporcao = textura.image.height / textura.image.width;
+  const altura = 2 * RAIO_PANORAMA * Math.tan((fovH * proporcao) / 2);
+
+  // No CylinderGeometry, theta=PI aponta para -Z, que e a direcao inicial da camera.
+  const geometria = new THREE.CylinderGeometry(
+    RAIO_PANORAMA, RAIO_PANORAMA, altura, 96, 1, true, Math.PI - fovH / 2, fovH
+  );
+
+  const material = new THREE.MeshBasicMaterial({ map: textura, side: THREE.BackSide, toneMapped: false });
+  const tela = new THREE.Mesh(geometria, material);
+  // O video foi gravado com a camera na altura dos olhos, entao o meio da foto
+  // e a linha do horizonte: e nessa altura que a tela precisa ficar centrada.
+  tela.position.y = ALTURA_DOS_OLHOS;
+
+  const grupo = new THREE.Group();
+  grupo.name = "panorama";
+  grupo.add(tela);
+
+  // A foto e uma casca ao redor da cena, entao o piso dela fica longe enquanto os
+  // animais estao a poucos metros. Quem ancora os personagens no chao e a sombra:
+  // este disco e invisivel e so recebe sombra, preservando a foto intacta.
+  const chao = new THREE.Mesh(
+    new THREE.CircleGeometry(7, 64),
+    new THREE.ShadowMaterial({ opacity: 0.32 })
+  );
+  chao.rotation.x = -Math.PI / 2;
+  chao.receiveShadow = true;
+  grupo.add(chao);
+
+  sceneManager.scene.add(grupo);
+  sceneManager.applyPanoramaProfile(
+    textura,
+    fovH,
+    ALTURA_DOS_OLHOS,
+    fovH * proporcao,
+    THREE.MathUtils.degToRad(ambiente.giro_inicial_graus ?? 0)
+  );
+
+  return grupo;
 }
 
 function buildProceduralClearing(sceneManager) {
@@ -95,3 +166,5 @@ function buildTree(x, y, z, scale) {
 
   return tree;
 }
+
+

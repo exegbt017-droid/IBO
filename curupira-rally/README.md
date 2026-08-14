@@ -6,9 +6,33 @@ um ambiente 3D onde o Curupira guia o participante em desafios de Biologia.
 
 Veja a análise de arquitetura completa em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-Este MVP cobre **1 posto completo**: ambiente 3D (procedural, enquanto não
-há vídeo real do local), Curupira, 3 animais investigáveis, um desafio
-final e pontuação — em português e espanhol, otimizado para celular.
+Este MVP cobre **1 posto completo**: o cenário é a sala real, montado a
+partir de um vídeo gravado no local; o Curupira apresenta a missão, três
+animais podem ser investigados e há um desafio final com pontuação — em
+português e espanhol, otimizado para celular.
+
+## Do vídeo ao cenário
+
+O participante não caminha pelo ambiente: ele olha em volta, observa os
+animais e responde. Por isso o cenário é uma **foto panorâmica do local
+real**, projetada numa tela curva ao redor da cena, com o Curupira e os
+animais em 3D à frente.
+
+Basta **girar a câmera no local** — não é preciso reconstrução 3D:
+
+```bash
+pip install -r tools/requirements.txt        # só na primeira vez
+python3 tools/video_para_panorama.py meu_video.mp4 --posto 01 --nome "Sala 12"
+```
+
+O script escolhe os quadros mais nítidos, costura o panorama, recorta as
+bordas e mede a cobertura em graus. Ele também afere a qualidade do vídeo
+e avisa quando o material não serve — melhor descobrir ali do que no dia
+do evento. Ao final imprime o trecho de JSON pronto para colar no posto.
+
+**Como gravar:** gire devagar (uns 15°/s), com boa luz, evitando apontar
+direto para janelas. Um giro de 20 a 30 segundos cobre bem um ambiente.
+A câmera deve girar **parada no lugar** — é isso que a costura espera.
 
 ## Como rodar
 
@@ -90,12 +114,23 @@ cd backend && source .venv/bin/activate && pytest tests/ -v
 
 ```
 start.sh    Sobe o projeto inteiro com um comando
-backend/    FastAPI: conteudo dos postos/animais (JSON), progresso (SQLite)
-            e a interface ja construida (app/static/web/)
+tools/      Pipeline de conteudo: video do local -> cenario panoramico
+backend/    FastAPI: conteudo dos postos/animais (JSON), progresso (SQLite),
+            cenarios (app/static/assets/) e a interface construida
 frontend/   Codigo-fonte da interface: Vite + Three.js, cena 3D, i18n
 offline/    Arquivos .html autossuficientes, um por posto (plano B)
 docs/       Documentacao de arquitetura
 ```
+
+## Tipos de ambiente
+
+Definidos no JSON do posto, em `ambiente.tipo`:
+
+| Tipo | Quando usar |
+|---|---|
+| `panorama` | Padrão. Foto do local real; basta girar a câmera no lugar. |
+| `glb` | Malha 3D reconstruída por fotogrametria, se houver vídeo adequado (o participante precisaria caminhar filmando). |
+| `procedural` | Cena gerada em código, para quando não há material do local. |
 
 ## Rotas
 

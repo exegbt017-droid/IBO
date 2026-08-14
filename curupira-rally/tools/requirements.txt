@@ -1,0 +1,7 @@
+# Dependencias apenas do pipeline de conteudo (video -> cenario).
+# Ficam fora do backend de proposito: rodar o Curupira Rally nao precisa delas.
+#
+#   pip install -r tools/requirements.txt
+opencv-python-headless==4.10.0.84
+numpy==2.2.0
+imageio-ffmpeg==0.5.1

@@ -46,12 +46,15 @@ async function bootstrap() {
     animalGroups.set(entry.animal.id, group);
   });
 
+  // Onde o Curupira para, definido pelo conteudo do posto.
+  const pontoDoCurupira = posto.curupira?.posicao ?? [0, 0, -3.5];
+
   // Garante que todos os animais do posto e o Curupira caibam na tela, seja
   // qual for a posicao definida no conteudo do posto ou o formato do aparelho.
-  const CURUPIRA_SPOT = [0, 0, -3.5];
-  sceneManager.frameToFit([...posto.animais.map((entry) => entry.posicao), CURUPIRA_SPOT]);
+  // (Em ambiente de panorama a camera fica fixa e isto nao se aplica.)
+  sceneManager.frameToFit([...posto.animais.map((entry) => entry.posicao), pontoDoCurupira]);
 
-  await curupira.enter();
+  await curupira.enter(pontoDoCurupira);
   curupira.talk(true);
 }
 

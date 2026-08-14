@@ -23,6 +23,20 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+const TIPOS_IMAGEM = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png" };
+
+/**
+ * Sem servidor nao ha de onde buscar o cenario, entao a imagem tem de viajar
+ * dentro da propria pagina.
+ */
+function embutirAsset(url) {
+  const caminho = join(BACKEND, "app", "static", url.replace(/^\//, ""));
+  const extensao = url.slice(url.lastIndexOf(".")).toLowerCase();
+  const mime = TIPOS_IMAGEM[extensao];
+  if (!mime) throw new Error(`Formato de cenario nao suportado no modo offline: ${url}`);
+  return `data:${mime};base64,${readFileSync(caminho).toString("base64")}`;
+}
+
 /** Mesma expansao que o backend faz em GET /api/postos/{id}. */
 function buildPosto(postoFile, animals) {
   const posto = readJson(join(CONTENT, "postos", postoFile));
@@ -35,6 +49,11 @@ function buildPosto(postoFile, animals) {
     }
     entry.animal = animal;
   }
+
+  if (posto.ambiente?.url?.startsWith("/assets/")) {
+    posto.ambiente.url = embutirAsset(posto.ambiente.url);
+  }
+
   return posto;
 }
 
