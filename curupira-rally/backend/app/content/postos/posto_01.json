@@ -69,27 +69,27 @@
       "animal_id": "sagui-tufo-branco",
       "ocorre_no_local": true,
       "posicao": [
-        -1.69,
+        -1.27,
         0,
-        -3.63
+        -2.61
       ]
     },
     {
       "animal_id": "jiboia",
       "ocorre_no_local": true,
       "posicao": [
-        2.71,
+        2.05,
         0,
-        -3.47
+        -2.72
       ]
     },
     {
       "animal_id": "pinguim-imperador",
       "ocorre_no_local": false,
       "posicao": [
-        0.84,
+        0.68,
         0,
-        -5.94
+        -5.56
       ]
     }
   ],

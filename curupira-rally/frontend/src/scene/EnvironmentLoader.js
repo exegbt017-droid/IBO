@@ -91,7 +91,8 @@ async function buildPanorama(sceneManager, ambiente) {
     fovH,
     ALTURA_DOS_OLHOS,
     fovH * proporcao,
-    THREE.MathUtils.degToRad(ambiente.giro_inicial_graus ?? 0)
+    THREE.MathUtils.degToRad(ambiente.giro_inicial_graus ?? 0),
+    THREE.MathUtils.degToRad(ambiente.inclinacao_inicial_graus ?? 8)
   );
 
   return grupo;

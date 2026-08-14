@@ -11,6 +11,9 @@ export class SceneManager {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
+    // Sombra suave: dentro de uma sala a luz e difusa, e sombra dura entregaria
+    // na hora que os personagens nao pertencem aquela foto.
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
     this.scene.background = createSkyGradient();
@@ -51,7 +54,7 @@ export class SceneManager {
    * iluminados pelo mesmo ambiente. A rotacao fica presa a abertura da imagem,
    * assim o participante nunca alcanca a borda.
    */
-  applyPanoramaProfile(textura, fovHorizontal, alturaDosOlhos, fovVertical, giroInicial = 0) {
+  applyPanoramaProfile(textura, fovHorizontal, alturaDosOlhos, fovVertical, giroInicial = 0, inclinacaoInicial = 0) {
     this.scene.fog = null;
     this._panorama = true;
 
@@ -71,7 +74,7 @@ export class SceneManager {
     this._limiteGiro = Math.max(0, fovHorizontal / 2 - meiaHorizontal);
     this._limiteInclinacao = Math.max(0, fovVertical / 2 - meiaVertical);
 
-    this._configurarOlharEmVolta(giroInicial);
+    this._configurarOlharEmVolta(giroInicial, inclinacaoInicial);
 
     const corMedia = mediaDaTextura(textura);
     this.scene.background = corMedia;
@@ -80,16 +83,32 @@ export class SceneManager {
     this._hemisphere = new THREE.HemisphereLight(corMedia, corMedia.clone().multiplyScalar(0.45), 1.5);
     this.scene.add(this._hemisphere);
 
-    this._sun.color.set(0xffffff);
-    this._sun.intensity = 0.85;
-    this._fill.intensity = 0.15;
+    // Luz de sala: pouca direcional, sombra curta e suave logo abaixo dos pes.
+    this._sun.color.set(0xfff6e8);
+    this._sun.intensity = 0.55;
+    this._sun.position.set(2.5, 6, 2);
+    this._sun.shadow.camera.left = -6;
+    this._sun.shadow.camera.right = 6;
+    this._sun.shadow.camera.top = 6;
+    this._sun.shadow.camera.bottom = -6;
+    this._sun.shadow.mapSize.set(2048, 2048);
+    this._sun.shadow.radius = 3;
+    this._sun.shadow.bias = -0.0012;
+    this._sun.shadow.camera.updateProjectionMatrix();
+
+    // Contraluz fria que destaca a silhueta contra a foto, sem clarear o corpo.
+    this._fill.color.set(0xcfe0ff);
+    this._fill.intensity = 0.5;
+    this._fill.position.set(-3, 2.5, -4);
   }
 
   /** Arrastar gira a vista no lugar, dentro do trecho coberto pela foto. */
-  _configurarOlharEmVolta(giroInicial = 0) {
+  _configurarOlharEmVolta(giroInicial = 0, inclinacaoInicial = 0) {
     // Giro positivo no conteudo significa "comeca olhando para a direita".
     this._giro = -giroInicial;
-    this._inclinacao = 0;
+    // Leve mergulho inicial: sobe os personagens no quadro, longe do painel de
+    // missao que ocupa a base da tela no celular.
+    this._inclinacao = -inclinacaoInicial;
     let arrastando = false;
     let ultimo = { x: 0, y: 0 };
 

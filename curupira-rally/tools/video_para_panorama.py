@@ -41,7 +41,7 @@ def ffmpeg() -> str:
         return "ffmpeg"
 
 
-def extrair_quadros(video: Path, destino: Path, largura: int = 1280) -> list[Path]:
+def extrair_quadros(video: Path, destino: Path, largura: int = 1920) -> list[Path]:
     destino.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [ffmpeg(), "-v", "error", "-i", str(video), "-vf", f"scale={largura}:-1",
@@ -138,6 +138,23 @@ def recorte_util(img: np.ndarray, tolerancia: float = 0.02) -> np.ndarray:
     return recorte
 
 
+def realcar(img: np.ndarray, forca: float = 0.6) -> np.ndarray:
+    """Devolve nitidez ao panorama (mascara de desfoque).
+
+    Video de mao sempre carrega algum borrao de movimento, e a costura suaviza
+    mais ainda ao fundir os quadros. Como o cenario ocupa quase toda a tela, o
+    ganho aqui e o que mais se nota na experiencia.
+    """
+    borrado = cv2.GaussianBlur(img, (0, 0), sigmaX=2.4)
+    realcado = cv2.addWeighted(img, 1 + forca, borrado, -forca, 0)
+
+    # Um toque de contraste local, sem estourar as janelas ja saturadas.
+    lab = cv2.cvtColor(realcado, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    l = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8)).apply(l)
+    return cv2.cvtColor(cv2.merge((l, a, b)), cv2.COLOR_LAB2BGR)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video", type=Path)
@@ -185,6 +202,7 @@ def main() -> int:
             return 1
 
     pano = recorte_util(pano)
+    pano = realcar(pano)
     altura, largura = pano.shape[:2]
 
     # O panorama cobre o que a camera varreu mais a propria abertura dela.
